@@ -7,9 +7,11 @@ interface SelectedProductPanelProps {
   product: Product
   quantity: number
   onQuantityChange: (quantity: number) => void
+  onContinue: () => void
 }
 
 export function SelectedProductPanel({
+  onContinue,
   onQuantityChange,
   product,
   quantity,
@@ -53,12 +55,9 @@ export function SelectedProductPanel({
           </div>
         </div>
 
-        <Button fullWidth disabled>
+        <Button fullWidth onClick={onContinue}>
           Continuar al pago
         </Button>
-        <p className="text-center text-xs leading-5 text-muted">
-          El formulario de entrega y pago se agregará en el siguiente feat.
-        </p>
       </CardContent>
     </Card>
   )

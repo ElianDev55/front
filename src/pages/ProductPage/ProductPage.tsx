@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AppShell } from '../../components/layout'
 import { Badge, Card, CardContent } from '../../components/ui'
 import { products } from '../../mocks/products'
+import { CheckoutPage } from '../CheckoutPage'
 import { ProductCard } from './components/ProductCard'
 import { SelectedProductPanel } from './components/SelectedProductPanel'
 import type { Product } from './product.types'
@@ -9,20 +10,36 @@ import type { Product } from './product.types'
 export function ProductPage() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const selectedProduct = products.find(({ id }) => id === selectedProductId)
 
   const handleSelectProduct = (product: Product) => {
     setSelectedProductId(product.id)
     setQuantity(1)
+    setIsCheckoutOpen(false)
+  }
+
+  const handleFinishCheckout = () => {
+    setSelectedProductId(null)
+    setQuantity(1)
+    setIsCheckoutOpen(false)
   }
 
   return (
     <AppShell
       sidebar={
-        selectedProduct ? (
+        selectedProduct && isCheckoutOpen ? (
+          <CheckoutPage
+            product={selectedProduct}
+            quantity={quantity}
+            onBack={() => setIsCheckoutOpen(false)}
+            onFinish={handleFinishCheckout}
+          />
+        ) : selectedProduct ? (
           <SelectedProductPanel
             product={selectedProduct}
             quantity={quantity}
+            onContinue={() => setIsCheckoutOpen(true)}
             onQuantityChange={setQuantity}
           />
         ) : (
