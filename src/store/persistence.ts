@@ -69,7 +69,9 @@ function isPaymentSummary(value: unknown): value is PaymentSummary {
   return (
     (value.brand === 'visa' || value.brand === 'mastercard' || value.brand === 'unknown') &&
     typeof value.lastFour === 'string' &&
-    /^\d{0,4}$/.test(value.lastFour)
+    /^\d{0,4}$/.test(value.lastFour) &&
+    typeof value.paymentToken === 'string' &&
+    /^tok_[A-Za-z0-9_-]+$/.test(value.paymentToken)
   )
 }
 
@@ -93,9 +95,10 @@ function isTransaction(value: unknown): value is TransactionResult {
 
   return (
     typeof value.number === 'string' &&
-    value.status === 'approved' &&
+    (value.status === 'approved' || value.status === 'declined' || value.status === 'unknown') &&
     typeof value.totalCents === 'number' &&
-    value.totalCents >= 0
+    value.totalCents >= 0 &&
+    (value.providerReference === null || typeof value.providerReference === 'string')
   )
 }
 

@@ -13,6 +13,7 @@ export interface DeliveryDetails {
 export interface PaymentSummary {
   brand: CardBrand
   lastFour: string
+  paymentToken: string
 }
 
 export interface CheckoutTotals {
@@ -30,6 +31,7 @@ export interface CheckoutSnapshot {
 
 export interface TransactionResult {
   number: string
-  status: 'approved'
+  status: 'approved' | 'declined' | 'unknown'
   totalCents: number
+  providerReference: string | null
 }

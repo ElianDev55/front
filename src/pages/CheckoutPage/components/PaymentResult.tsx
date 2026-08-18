@@ -6,20 +6,22 @@ interface PaymentResultProps {
   transactionNumber: string
   totals: CheckoutTotals
   onFinish: () => void
+  status?: 'approved' | 'declined' | 'unknown'
 }
 
-export function PaymentResult({ onFinish, totals, transactionNumber }: PaymentResultProps) {
+export function PaymentResult({ onFinish, status = 'approved', totals, transactionNumber }: PaymentResultProps) {
+  const approved = status === 'approved'
   return (
     <div className="space-y-6 text-center">
-      <Badge variant="success" dot>
-        Pago aprobado
+      <Badge variant={approved ? 'success' : 'danger'} dot>
+        {approved ? 'Pago aprobado' : 'Pago no aprobado'}
       </Badge>
       <div>
         <h2 className="font-display text-2xl font-semibold tracking-tight text-ink">
-          ¡Compra confirmada!
+          {approved ? '¡Compra confirmada!' : 'No fue posible completar el pago'}
         </h2>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Este resultado es local y simula la confirmación del pago.
+          {approved ? 'Tu pedido fue registrado correctamente.' : 'Puedes revisar el estado o intentar nuevamente.'}
         </p>
       </div>
       <div className="rounded-card bg-brand-soft p-5">

@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Button, Modal } from '../../components/ui'
-import { products } from '../../mocks/products'
+import { chargeCheckout, prepareCheckout, tokenizeCard } from '../../lib/api'
 import {
   closeCheckout,
   completePayment,
@@ -16,11 +16,16 @@ import { selectCheckout } from '../../store/selectors'
 import type { DeliveryDetails } from '../../types/checkout'
 import type { CheckoutFormValues } from './checkout.types'
 import { calculateCheckoutTotals } from './checkoutPricing'
-import { detectCardBrand, onlyDigits } from './checkoutValidation'
+import { onlyDigits } from './checkoutValidation'
 import { DeliveryForm } from './components/DeliveryForm'
 import { OrderSummary } from './components/OrderSummary'
 import { PaymentForm } from './components/PaymentForm'
 import { PaymentResult } from './components/PaymentResult'
+
+interface CheckoutPageProps {
+  onFinished: () => void
+  product: import('../ProductPage/product.types').Product
+}
 
 const emptyFormValues: CheckoutFormValues = {
   recipientName: '',
@@ -35,10 +40,13 @@ const emptyFormValues: CheckoutFormValues = {
   cvv: '',
 }
 
-export function CheckoutPage() {
+export function CheckoutPage({ onFinished, product }: CheckoutPageProps) {
   const dispatch = useAppDispatch()
   const checkout = useAppSelector(selectCheckout)
-  const product = products.find(({ id }) => id === checkout.selectedProductId)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const idempotencyKey = useRef<string | null>(null)
+  const checkoutKey = `checkout-${useId().replaceAll(':', '')}`
   const totals = product
     ? calculateCheckoutTotals(product, checkout.quantity)
     : null
@@ -80,13 +88,24 @@ export function CheckoutPage() {
     return null
   }
 
-  const handleFormSubmit = (values: CheckoutFormValues) => {
+  const handleFormSubmit = async (values: CheckoutFormValues) => {
     if (!totals) {
       return
     }
 
-    dispatch(
-      saveCheckoutDetails({
+    setError(null)
+    setIsSubmitting(true)
+    try {
+      const [month, year] = values.expiry.split('/')
+      const payment = await tokenizeCard({
+        cardHolder: values.cardholderName,
+        cvc: values.cvv,
+        expMonth: month,
+        expYear: year,
+        number: onlyDigits(values.cardNumber),
+      })
+      dispatch(
+        saveCheckoutDetails({
         delivery: {
           recipientName: values.recipientName,
           email: values.email,
@@ -95,31 +114,56 @@ export function CheckoutPage() {
           city: values.city,
           postalCode: values.postalCode,
         },
-        payment: {
-          brand: detectCardBrand(values.cardNumber),
-          lastFour: onlyDigits(values.cardNumber).slice(-4),
-        },
+        payment,
         totals,
-      }),
-    )
+        }),
+      )
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'No fue posible tokenizar la tarjeta.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleConfirmPayment = () => {
-    if (!totals) {
+  const handleConfirmPayment = async () => {
+    if (!totals || !checkout.delivery || !checkout.payment) {
       return
     }
 
-    dispatch(
-      completePayment({
-        number: `LOCAL-${product.id.slice(0, 6).toUpperCase()}-${checkout.quantity}`,
-        status: 'approved',
-        totalCents: totals.totalCents,
-      }),
-    )
+    setError(null)
+    setIsSubmitting(true)
+    try {
+      const requestedKey = `checkout-${product.id}-${checkoutKey}`
+      idempotencyKey.current ??= requestedKey
+      const prepared = await prepareCheckout({
+        baseFeeInCents: totals.baseFeeCents,
+        currency: 'COP',
+        delivery: checkout.delivery,
+        deliveryFeeInCents: totals.deliveryFeeCents,
+        idempotencyKey: idempotencyKey.current,
+        productId: product.id,
+        quantity: checkout.quantity,
+      })
+      const charged = await chargeCheckout(prepared.transactionId, checkout.payment.paymentToken)
+      dispatch(
+        completePayment({
+          number: charged.transactionNumber,
+          providerReference: charged.providerReference,
+          status: charged.status === 'APPROVED' ? 'approved' : charged.status === 'DECLINED' ? 'declined' : 'unknown',
+          totalCents: charged.amountInCents,
+        }),
+      )
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'No fue posible completar el pago.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleFinish = () => {
+    idempotencyKey.current = null
     dispatch(resetCheckout())
+    onFinished()
   }
 
   const stepLabel =
@@ -137,13 +181,14 @@ export function CheckoutPage() {
   const stepNumber = checkout.step === 'form' ? '2' : checkout.step === 'summary' ? '3' : '4'
 
   return (
-    <Modal
-      isOpen={checkout.step !== 'selection'}
-      title={modalTitle}
-      description={`${product.name} · Paso ${stepNumber} de 5 · ${stepLabel}`}
-      onClose={() => dispatch(closeCheckout())}
-      className="max-w-xl"
-    >
+    <>
+      <Modal
+        isOpen={checkout.step !== 'selection'}
+        title={modalTitle}
+        description={`${product.name} · Paso ${stepNumber} de 5 · ${stepLabel}`}
+        onClose={() => dispatch(closeCheckout())}
+        className="max-w-xl"
+      >
         {checkout.step === 'form' && (
           <form className="space-y-8" onSubmit={handleSubmit(handleFormSubmit)}>
             <DeliveryForm errors={formState.errors} register={register} />
@@ -153,7 +198,7 @@ export function CheckoutPage() {
               register={register}
             />
             <Button fullWidth type="submit">
-              Revisar compra
+              {isSubmitting ? 'Procesando...' : 'Revisar compra'}
             </Button>
           </form>
         )}
@@ -173,10 +218,13 @@ export function CheckoutPage() {
         {checkout.step === 'result' && checkout.transaction && checkout.totals && (
           <PaymentResult
             onFinish={handleFinish}
+            status={checkout.transaction.status}
             totals={checkout.totals}
             transactionNumber={checkout.transaction.number}
           />
         )}
-    </Modal>
+      </Modal>
+      {error && <p className="fixed bottom-4 left-4 right-4 z-50 rounded-card bg-red-100 p-4 text-sm text-red-800">{error}</p>}
+    </>
   )
 }
