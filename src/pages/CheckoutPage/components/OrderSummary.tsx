@@ -1,22 +1,24 @@
 import { Badge, Button, CardContent } from '../../../components/ui'
 import { formatCurrency } from '../../../lib/formatCurrency'
 import type { Product } from '../../ProductPage/product.types'
-import type { CheckoutFormValues, CheckoutTotals } from '../checkout.types'
-import { maskCardNumber } from '../checkoutValidation'
+import type { DeliveryDetails, PaymentSummary } from '../../../types/checkout'
+import type { CheckoutTotals } from '../checkout.types'
 
 interface OrderSummaryProps {
   product: Product
   quantity: number
-  formData: CheckoutFormValues
+  delivery: DeliveryDetails
+  payment: PaymentSummary
   totals: CheckoutTotals
   onBack: () => void
   onConfirm: () => void
 }
 
 export function OrderSummary({
-  formData,
+  delivery,
   onBack,
   onConfirm,
+  payment,
   product,
   quantity,
   totals,
@@ -57,15 +59,18 @@ export function OrderSummary({
       <div className="space-y-2">
         <p className="text-sm font-semibold text-ink">Entrega</p>
         <p className="text-sm leading-6 text-muted">
-          {formData.recipientName}, {formData.address}, {formData.city}
+          {delivery.recipientName}, {delivery.address}, {delivery.city}
         </p>
-        <p className="text-sm text-muted">{formData.email}</p>
+        <p className="text-sm text-muted">{delivery.email}</p>
       </div>
 
       <div className="flex items-center justify-between gap-4 rounded-control border border-border p-4">
         <div>
           <p className="text-sm font-semibold text-ink">Tarjeta</p>
-          <p className="mt-1 text-sm text-muted">{maskCardNumber(formData.cardNumber)}</p>
+          <p className="mt-1 text-sm text-muted">
+            {payment.brand === 'unknown' ? 'Tarjeta' : payment.brand.toUpperCase()} ••••{' '}
+            {payment.lastFour}
+          </p>
         </div>
         <Badge variant="brand">Protegida</Badge>
       </div>
