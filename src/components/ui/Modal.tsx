@@ -1,4 +1,4 @@
-import { useEffect, useId, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/cn'
 
@@ -25,27 +25,38 @@ export function Modal({
 }: ModalProps) {
   const titleId = useId()
   const descriptionId = useId()
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const onCloseRef = useRef(onClose)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   useEffect(() => {
     if (!isOpen) {
       return
     }
 
+    previousFocusRef.current = document.activeElement as HTMLElement | null
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
       }
     }
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     document.addEventListener('keydown', handleKeyDown)
+    closeButtonRef.current?.focus()
 
     return () => {
       document.body.style.overflow = previousOverflow
       document.removeEventListener('keydown', handleKeyDown)
+      previousFocusRef.current?.focus()
     }
-  }, [isOpen, onClose])
+  }, [isOpen])
 
   if (!isOpen || typeof document === 'undefined') {
     return null
@@ -83,6 +94,7 @@ export function Modal({
           <button
             type="button"
             aria-label="Cerrar modal"
+            ref={closeButtonRef}
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-xl text-muted transition-colors hover:bg-surface-subtle hover:text-ink focus:outline-none"
             onClick={onClose}
           >

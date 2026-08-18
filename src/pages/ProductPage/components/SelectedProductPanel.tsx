@@ -56,7 +56,7 @@ export function SelectedProductPanel({
         </div>
 
         <Button fullWidth onClick={onContinue}>
-          Continuar al pago
+          Pagar con tarjeta
         </Button>
       </CardContent>
     </Card>

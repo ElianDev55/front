@@ -30,9 +30,7 @@ export function ProductPage() {
   return (
     <AppShell
       sidebar={
-        selectedProduct && checkoutStep !== 'selection' ? (
-          <CheckoutPage />
-        ) : selectedProduct ? (
+        selectedProduct ? (
           <SelectedProductPanel
             product={selectedProduct}
             quantity={quantity}
@@ -80,6 +78,7 @@ export function ProductPage() {
           ))}
         </div>
       </div>
+      {selectedProduct && checkoutStep !== 'selection' && <CheckoutPage />}
     </AppShell>
   )
 }

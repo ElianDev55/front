@@ -1,4 +1,4 @@
-import { Badge, Button, CardContent } from '../../../components/ui'
+import { Badge, Button } from '../../../components/ui'
 import { formatCurrency } from '../../../lib/formatCurrency'
 import type { CheckoutTotals } from '../checkout.types'
 
@@ -10,7 +10,7 @@ interface PaymentResultProps {
 
 export function PaymentResult({ onFinish, totals, transactionNumber }: PaymentResultProps) {
   return (
-    <CardContent className="space-y-6 text-center">
+    <div className="space-y-6 text-center">
       <Badge variant="success" dot>
         Pago aprobado
       </Badge>
@@ -36,6 +36,6 @@ export function PaymentResult({ onFinish, totals, transactionNumber }: PaymentRe
       <Button fullWidth onClick={onFinish}>
         Volver al catálogo
       </Button>
-    </CardContent>
+    </div>
   )
 }

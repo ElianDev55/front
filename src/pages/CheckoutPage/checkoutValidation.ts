@@ -23,7 +23,13 @@ export function detectCardBrand(value: string): CardBrand {
     return 'visa'
   }
 
-  if (/^(5[1-5]|2[2-7])/.test(digits)) {
+  const prefixTwo = Number(digits.slice(0, 2))
+  const prefixFour = Number(digits.slice(0, 4))
+
+  if (
+    (prefixTwo >= 51 && prefixTwo <= 55) ||
+    (prefixFour >= 2221 && prefixFour <= 2720)
+  ) {
     return 'mastercard'
   }
 

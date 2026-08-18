@@ -1,4 +1,4 @@
-import { Badge, Button, CardContent } from '../../../components/ui'
+import { Badge, Button } from '../../../components/ui'
 import { formatCurrency } from '../../../lib/formatCurrency'
 import type { Product } from '../../ProductPage/product.types'
 import type { DeliveryDetails, PaymentSummary } from '../../../types/checkout'
@@ -24,7 +24,7 @@ export function OrderSummary({
   totals,
 }: OrderSummaryProps) {
   return (
-    <CardContent className="space-y-6">
+    <div className="space-y-6">
       <div>
         <p className="text-caption font-semibold uppercase tracking-[0.16em] text-brand">
           Resumen
@@ -81,6 +81,6 @@ export function OrderSummary({
         </Button>
         <Button onClick={onConfirm}>Confirmar pago</Button>
       </div>
-    </CardContent>
+    </div>
   )
 }

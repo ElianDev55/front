@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
-import { Button, Card, CardContent } from '../../components/ui'
+import { Button, Modal } from '../../components/ui'
 import { products } from '../../mocks/products'
 import {
   closeCheckout,
@@ -77,18 +77,7 @@ export function CheckoutPage() {
   }, [address, city, checkout.step, dispatch, email, phone, postalCode, recipientName])
 
   if (!product) {
-    return (
-      <Card>
-        <CardContent className="space-y-4">
-          <p className="font-display text-lg font-semibold text-ink">
-            No hay un producto seleccionado.
-          </p>
-          <Button fullWidth onClick={() => dispatch(resetCheckout())}>
-            Volver al catálogo
-          </Button>
-        </CardContent>
-      </Card>
-    )
+    return null
   }
 
   const handleFormSubmit = (values: CheckoutFormValues) => {
@@ -139,27 +128,22 @@ export function CheckoutPage() {
       : checkout.step === 'summary'
         ? 'Resumen de compra'
         : 'Resultado'
+  const modalTitle =
+    checkout.step === 'form'
+      ? 'Pagar con tarjeta'
+      : checkout.step === 'summary'
+        ? 'Revisa tu compra'
+        : 'Resultado del pago'
+  const stepNumber = checkout.step === 'form' ? '2' : checkout.step === 'summary' ? '3' : '4'
 
   return (
-    <Card>
-      <CardContent className="space-y-5">
-        <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
-          <div>
-            <p className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
-              Paso {checkout.step === 'form' ? '2' : checkout.step === 'summary' ? '3' : '4'} de 5
-            </p>
-            <h2 className="mt-1 font-display text-lg font-semibold tracking-tight text-ink">
-              {product.name}
-            </h2>
-            <p className="mt-1 text-sm text-muted">{stepLabel}</p>
-          </div>
-          {checkout.step === 'form' && (
-            <Button variant="ghost" size="sm" onClick={() => dispatch(closeCheckout())}>
-              Volver
-            </Button>
-          )}
-        </div>
-
+    <Modal
+      isOpen={checkout.step !== 'selection'}
+      title={modalTitle}
+      description={`${product.name} · Paso ${stepNumber} de 5 · ${stepLabel}`}
+      onClose={() => dispatch(closeCheckout())}
+      className="max-w-xl"
+    >
         {checkout.step === 'form' && (
           <form className="space-y-8" onSubmit={handleSubmit(handleFormSubmit)}>
             <DeliveryForm errors={formState.errors} register={register} />
@@ -193,7 +177,6 @@ export function CheckoutPage() {
             transactionNumber={checkout.transaction.number}
           />
         )}
-      </CardContent>
-    </Card>
+    </Modal>
   )
 }

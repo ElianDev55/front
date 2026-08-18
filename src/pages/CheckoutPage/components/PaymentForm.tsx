@@ -1,5 +1,5 @@
 import type { FieldErrors, UseFormRegister } from 'react-hook-form'
-import { Badge, Input } from '../../../components/ui'
+import { Input } from '../../../components/ui'
 import type { CheckoutFormValues } from '../checkout.types'
 import {
   detectCardBrand,
@@ -8,6 +8,7 @@ import {
   isValidCardNumber,
   isValidExpiry,
 } from '../checkoutValidation'
+import { CardBrandLogo } from './CardBrandLogo'
 
 interface PaymentFormProps {
   register: UseFormRegister<CheckoutFormValues>
@@ -33,7 +34,7 @@ export function PaymentForm({ cardNumber, errors, register }: PaymentFormProps) 
           Datos de pago
         </legend>
         {cardBrand !== 'unknown' && (
-          <Badge variant="brand">{cardBrand === 'visa' ? 'VISA' : 'Mastercard'}</Badge>
+          <CardBrandLogo brand={cardBrand} />
         )}
       </div>
       <Input
