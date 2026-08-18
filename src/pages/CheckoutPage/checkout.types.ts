@@ -1,7 +1,6 @@
 import type { Product } from '../ProductPage/product.types'
 
-export type CardBrand = 'visa' | 'mastercard' | 'unknown'
-export type CheckoutStep = 'form' | 'summary' | 'result'
+export type { CardBrand, CheckoutStep, CheckoutTotals } from '../../types/checkout'
 
 export interface CheckoutFormValues {
   recipientName: string
@@ -14,13 +13,6 @@ export interface CheckoutFormValues {
   cardNumber: string
   expiry: string
   cvv: string
-}
-
-export interface CheckoutTotals {
-  productAmountCents: number
-  baseFeeCents: number
-  deliveryFeeCents: number
-  totalCents: number
 }
 
 export interface CheckoutPageProps {

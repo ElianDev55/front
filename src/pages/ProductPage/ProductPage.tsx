@@ -1,46 +1,43 @@
-import { useState } from 'react'
 import { AppShell } from '../../components/layout'
 import { Badge, Card, CardContent } from '../../components/ui'
 import { products } from '../../mocks/products'
 import { CheckoutPage } from '../CheckoutPage'
+import {
+  selectCheckoutStep,
+  selectProduct,
+  selectQuantity,
+  selectSelectedProductId,
+  setQuantity,
+  startCheckout,
+  useAppDispatch,
+  useAppSelector,
+} from '../../store'
 import { ProductCard } from './components/ProductCard'
 import { SelectedProductPanel } from './components/SelectedProductPanel'
 import type { Product } from './product.types'
 
 export function ProductPage() {
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
-  const [quantity, setQuantity] = useState(1)
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const dispatch = useAppDispatch()
+  const selectedProductId = useAppSelector(selectSelectedProductId)
+  const quantity = useAppSelector(selectQuantity)
+  const checkoutStep = useAppSelector(selectCheckoutStep)
   const selectedProduct = products.find(({ id }) => id === selectedProductId)
 
   const handleSelectProduct = (product: Product) => {
-    setSelectedProductId(product.id)
-    setQuantity(1)
-    setIsCheckoutOpen(false)
-  }
-
-  const handleFinishCheckout = () => {
-    setSelectedProductId(null)
-    setQuantity(1)
-    setIsCheckoutOpen(false)
+    dispatch(selectProduct(product.id))
   }
 
   return (
     <AppShell
       sidebar={
-        selectedProduct && isCheckoutOpen ? (
-          <CheckoutPage
-            product={selectedProduct}
-            quantity={quantity}
-            onBack={() => setIsCheckoutOpen(false)}
-            onFinish={handleFinishCheckout}
-          />
+        selectedProduct && checkoutStep !== 'selection' ? (
+          <CheckoutPage />
         ) : selectedProduct ? (
           <SelectedProductPanel
             product={selectedProduct}
             quantity={quantity}
-            onContinue={() => setIsCheckoutOpen(true)}
-            onQuantityChange={setQuantity}
+            onContinue={() => dispatch(startCheckout())}
+            onQuantityChange={(value) => dispatch(setQuantity(value))}
           />
         ) : (
           <Card>
