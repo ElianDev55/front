@@ -1,16 +1,15 @@
 import type { Product } from '../pages/ProductPage/product.types'
 import type { DeliveryDetails, PaymentSummary } from '../types/checkout'
 
-const runtimeConfig = globalThis as typeof globalThis & {
-  __API_BASE_URL__?: string
-  __WOMPI_API_BASE_URL__?: string
-  __WOMPI_PUBLIC_KEY__?: string
-}
-const apiBaseUrl = runtimeConfig.__API_BASE_URL__ ?? 'http://localhost:3000'
+const apiBaseUrl = (
+  typeof __API_BASE_URL__ === 'string' ? __API_BASE_URL__ : 'http://localhost:3000'
+).replace(/\/$/, '')
 const wompiBaseUrl =
-  runtimeConfig.__WOMPI_API_BASE_URL__ ??
-  'https://api-sandbox.co.uat.wompi.dev/v1'
-const wompiPublicKey = runtimeConfig.__WOMPI_PUBLIC_KEY__
+  typeof __WOMPI_API_BASE_URL__ === 'string'
+    ? __WOMPI_API_BASE_URL__.replace(/\/$/, '')
+    : 'https://api-sandbox.co.uat.wompi.dev/v1'
+const wompiPublicKey =
+  typeof __WOMPI_PUBLIC_KEY__ === 'string' ? __WOMPI_PUBLIC_KEY__ : undefined
 
 interface ApiProduct {
   id: string
